@@ -1,0 +1,493 @@
+---
+title: "HomeWork_3"
+author: "SRK Yarra"
+date: "2023-10-22"
+output:
+  html_document: default
+  pdf_document: default
+---
+#problem 1
+```{r}
+
+#problem 1(A)
+
+# Load the necessary library
+library(rpart)
+
+# Load the dataset
+data <- read.csv("breast_cancer_updated.csv")
+
+# Remove the IDNumber column
+data <- data[,-1]
+
+# Remove rows with NA values
+data <- na.omit(data)
+# Load the necessary library for cross-validation
+library(caret)
+
+# Set the seed for reproducibility
+set.seed(123)
+
+# Define the 10-fold cross-validation control
+ctrl <- trainControl(method = "cv", number = 10)
+
+# Train the decision tree using rpart with 10-fold cross-validation
+model <- train(Class ~ ., data = data, method = "rpart", trControl = ctrl)
+
+# Report the accuracy
+accuracy <- model$results$Accuracy
+print(paste("Mean Accuracy:", mean(accuracy)))
+# Load the necessary library for plotting the decision tree
+library(rpart.plot)
+
+#problem 1(b)
+
+# Create the dec` ision tree
+tree <- rpart(Class ~ ., data = data)
+
+# Plot the decision tree
+prp(tree, type = 2, extra = 1)
+# Extract the decision tree rules
+tree_rules <- as.character(tree$frame$yval)
+
+#problem 1(c)
+# Generate IF-THEN rules
+for (i in 1:length(tree_rules)) {
+  rule <- tree_rules[i]
+  split <- as.character(tree$frame$var[i])
+  if (!is.na(split) && split != "") {
+    split_val <- as.character(tree$frame$yval[i])
+    print(paste("IF", split, "THEN Class =", split_val))
+  }
+}
+
+```
+
+#problem 2(A)
+#Loaded libraries rpart and caret and trained the data set with the given
+```{r}
+library(dplyr)
+data("storms")
+
+# Make sure the 'category' variable is a factor
+storms$category <- as.factor(storms$category)
+library(rpart)
+library(caret)
+set.seed(94)
+train_control = trainControl(method = "cv", number = 10)
+# Make sure the 'category' variable is a factor
+storms$category <- as.factor(storms$category)
+storms <- na.omit(storms)
+storms
+
+# Fit the model
+tree1 <- train(category ~., data = storms, method = "rpart1SE", trControl = train_control)
+tree1
+
+pred_tree <- predict(tree1, storms)
+# Confusion Matrix
+confusionMatrix(storms$category, pred_tree)
+train_control = trainControl(method = "cv", number = 10)
+# Fit the model
+tree_caret <- train(category~., data = storms, method = "rpart", trControl = train_control)
+tree_caret
+#Accuracy
+accuracy<-tree_caret$results$Accuracy
+accuracy
+
+```
+#problem 2(B)
+```{r}
+#Problem 2(b)
+library(dplyr)
+library(caret)
+library(rpart)
+
+# Load the storms dataset
+data("storms")
+storms <- storms[, -1]  # Remove the first column
+
+# Remove rows with missing values
+storms <- na.omit(storms)
+
+# Convert the target variable 'category' to a factor
+storms$category <- as.factor(storms$category)
+
+# Set the seed for reproducibility
+set.seed(123)
+
+# Create train control for cross-validation
+train_control <- trainControl(method = "cv", number = 10)
+
+# Set hyperparameters for the decision tree
+hypers <- rpart.control(minsplit = 5, maxdepth = 2, minbucket = 3)
+
+# Build the decision tree model using cross-validation
+tree2 <- train(category ~ ., data = storms, method = "rpart", trControl = train_control, control = hypers)
+
+# Evaluate the model fit
+tree2
+
+# Predict on the full dataset
+pred_tree <- predict(tree2, storms)
+
+# Confusion Matrix for the full dataset
+confusionMatrix(storms$category, pred_tree)
+index <- createDataPartition(y = storms$category, p = 0.7, list = FALSE)
+
+# Create the training and test sets
+train_set <- storms[index, ]
+test_set <- storms[-index, ]
+
+# Build the decision tree model on the training set
+tree3 <- train(category ~ ., data = train_set, method = "rpart", trControl = train_control, control = hypers)
+
+# Evaluate the model on the training set
+pred_tree_train <- predict(tree3, train_set)
+
+# Confusion Matrix for the training set
+confusionMatrix(train_set$category, pred_tree_train)
+# Evaluate the model on the test set
+pred_tree_test <- predict(tree3, test_set)
+
+# Confusion Matrix for the test set
+confusionMatrix(test_set$category, pred_tree_test)
+
+
+```
+#problem 3(A)
+
+```{r}
+library(caret)
+library(dplyr)
+head(storms)
+storms_clean <- na.omit(storms)
+head(storms_clean)
+storms_clean$category <- as.factor(storms_clean$category)
+
+#(A)
+# Set a random seed for reproducibility
+set.seed(123)
+train_index <- createDataPartition(storms_clean$category, p = 0.8, list =
+FALSE)
+# Create training and testing datasets
+train_data <- storms_clean[train_index, ]
+test_data <- storms_clean[-train_index, ]
+
+#(B)
+# Load required libraries
+library(rpart)
+library(rpart.plot)
+train_control = trainControl(method = "cv", number = 10)
+hypers = rpart.control(minsplit = 2, maxdepth = 3, minbucket=1)
+tree_model_1 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+hypers = rpart.control(minsplit = 3, maxdepth = 4, minbucket=2)
+tree_model_2 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+hypers = rpart.control(minsplit = 4, maxdepth = 5, minbucket=3)
+tree_model_3 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+hypers = rpart.control(minsplit = 5, maxdepth = 6, minbucket=4)
+tree_model_4 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+
+
+hypers = rpart.control(minsplit = 6, maxdepth = 7, minbucket=5)
+tree_model_5 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+hypers = rpart.control(minsplit = 7, maxdepth = 8, minbucket=6)
+tree_model_6 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+hypers = rpart.control(minsplit = 8, maxdepth = 9, minbucket=7)
+tree_model_7 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+hypers = rpart.control(minsplit = 9, maxdepth = 10, minbucket=8)
+tree_model_8 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+hypers = rpart.control(minsplit = 5, maxdepth = 2, minbucket=5)
+tree_model_9 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+hypers = rpart.control(minsplit = 7, maxdepth = 3, minbucket=7)
+tree_model_10 <- train(category~ ., data = train_data, control = hypers,
+trControl = train_control, method = "rpart1SE")
+     #Evaluating both training and testing sets
+train_preds_1 <- predict(tree_model_1, train_data, type = "raw")
+test_preds_1 <- predict(tree_model_1, test_data, type = "raw")
+train_preds_2 <- predict(tree_model_2, train_data, type = "raw")
+test_preds_2 <- predict(tree_model_2, test_data, type = "raw")
+train_preds_3 <- predict(tree_model_3, train_data, type = "raw")
+test_preds_3 <- predict(tree_model_3, test_data, type = "raw")
+train_preds_4 <- predict(tree_model_4, train_data, type = "raw")
+test_preds_4 <- predict(tree_model_4, test_data, type = "raw")
+train_preds_5 <- predict(tree_model_5, train_data, type = "raw")
+test_preds_5 <- predict(tree_model_5, test_data, type = "raw")
+train_preds_6 <- predict(tree_model_6, train_data, type = "raw")
+test_preds_6 <- predict(tree_model_6, test_data, type = "raw")
+train_preds_7 <- predict(tree_model_7, train_data, type = "raw")
+test_preds_7 <- predict(tree_model_7, test_data, type = "raw")
+train_preds_8 <- predict(tree_model_8, train_data, type = "raw")
+test_preds_8 <- predict(tree_model_8, test_data, type = "raw")
+train_preds_9 <- predict(tree_model_9, train_data, type = "raw")
+test_preds_9 <- predict(tree_model_9, test_data, type = "raw")
+train_preds_10 <- predict(tree_model_10, train_data, type = "raw")
+test_preds_10 <- predict(tree_model_10, test_data, type = "raw")
+  #Calculated training and testing accuracies
+training_accuracy_1 <- mean(train_preds_1 == train_data$category)
+testing_accuracy_1 <- mean(test_preds_1 == test_data$category)
+training_accuracy_2 <- mean(train_preds_2 == train_data$category)
+testing_accuracy_2 <- mean(test_preds_2 == test_data$category)
+training_accuracy_3 <- mean(train_preds_3 == train_data$category)
+testing_accuracy_3 <- mean(test_preds_3 == test_data$category)
+training_accuracy_4 <- mean(train_preds_4 == train_data$category)
+testing_accuracy_4 <- mean(test_preds_4 == test_data$category)
+training_accuracy_5 <- mean(train_preds_5 == train_data$category)
+testing_accuracy_5 <- mean(test_preds_5 == test_data$category)
+training_accuracy_6 <- mean(train_preds_6 == train_data$category)
+testing_accuracy_6 <- mean(test_preds_6 == test_data$category)
+training_accuracy_7 <- mean(train_preds_7 == train_data$category)
+testing_accuracy_7 <- mean(test_preds_7 == test_data$category)
+training_accuracy_8 <- mean(train_preds_8 == train_data$category)
+testing_accuracy_8 <- mean(test_preds_8 == test_data$category)
+training_accuracy_9 <- mean(train_preds_9 == train_data$category)
+testing_accuracy_9 <- mean(test_preds_9 == test_data$category)
+training_accuracy_10 <- mean(train_preds_10 == train_data$category)
+testing_accuracy_10 <- mean(test_preds_10 == test_data$category)
+
+# Create a results table
+results_table <- data.frame(
+ Model = 1:10,
+ maxdepth = c(3, 4, 5, 6, 7, 8, 9, 10, 5 , 7),
+ minsplit = c(2 ,3 ,4 , 5 , 6, 7, 8, 9, 2, 3),
+ minbucket = c(1, 2, 3, 4, 5, 6, 7, 8, 5, 7),
+ num_nodes = c(
+ sum(tree_model_1$frame$var != "<leaf>"),
+ sum(tree_model_2$frame$var != "<leaf>"),
+ sum(tree_model_3$frame$var != "<leaf>"),
+ sum(tree_model_4$frame$var != "<leaf>"),
+ sum(tree_model_5$frame$var != "<leaf>"),
+ sum(tree_model_6$frame$var != "<leaf>"),
+ sum(tree_model_7$frame$var != "<leaf>"),
+ sum(tree_model_8$frame$var != "<leaf>"),
+ sum(tree_model_9$frame$var != "<leaf>"),
+ sum(tree_model_10$frame$var != "<leaf>")
+ ),
+ training_accuracy = c(
+ training_accuracy_1,
+ training_accuracy_2,
+ training_accuracy_3,
+ training_accuracy_4,
+ training_accuracy_5,
+ training_accuracy_6,
+ training_accuracy_7,
+ training_accuracy_8,
+ training_accuracy_9,
+ training_accuracy_10
+ ),
+ testing_accuracy = c(
+ testing_accuracy_1,
+ testing_accuracy_2,
+ testing_accuracy_3,
+ testing_accuracy_4,
+ testing_accuracy_5,
+ testing_accuracy_6,
+ testing_accuracy_7,
+ testing_accuracy_8,
+ testing_accuracy_9,
+ testing_accuracy_10
+ )
+)
+results_table
+
+library(ggplot2)
+ggplot(results_table, aes(x = num_nodes, y = testing_accuracy)) +
+geom_point(aes(color = Model)) +
+labs(title = "Accuracy vs. Complexity", x = "Number of Nodes", y = "Testing
+Accuracy") +
+theme_minimal()
+
+#(C)
+selected_model_params <- rpart.control(minsplit = 3, maxdepth = 4, minbucket
+= 2)
+library(caret)
+selected_model <- tree_model_2
+test_preds <- predict(selected_model, test_data, type = "prob")
+confusion_matrix <- confusionMatrix(data = test_preds_2, reference =
+test_data$category)
+confusion_matrix
+```
+#problem 4
+
+```{r}
+# Load the required libraries
+library(caret)
+library(caret)
+
+library(rpart)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(randomForest)
+
+# Load the dataset
+data <- read.csv("Bank_Modified.csv")
+data
+
+# Remove the "ID" column
+data1 <- data[, -1]
+data1
+
+# Convert the "approval" variable to a factor
+data$approval <- as.factor(data$approval)
+
+set.seed(123)  # Set the seed for reproducibility
+train_index <- createDataPartition(data$approval, p = 0.7, list = FALSE)
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
+# Impute missing values with mean imputation
+train_data <- na.omit(train_data)  # Remove rows with missing values
+
+# Remove rows with missing values
+train_data <- na.omit(train_data)
+
+
+# Train a random forest model
+model <- randomForest(approval ~ ., data = train_data, ntree = 500, importance = TRUE)
+
+# Get feature importance
+feature_importance <- importance(model)
+print(feature_importance)
+
+ # problem 4(A)
+# Load the required libraries
+library(rpart)
+
+# Create your decision tree model
+tree_model <- rpart(approval ~ ., data = train_data, method = "class", control = rpart.control(minsplit = 10, maxdepth = 20))
+
+tree_model
+
+#problem 4(B)
+
+# Load the required library
+library(caret)
+
+# Run variable importance analysis on the model
+variable_importance <- varImp(tree_model)
+
+# Print the variable importance results
+print(variable_importance)
+
+#problem 4(C)
+
+# Load the required libraries
+library(caret)
+library(ggplot2)
+
+tree_model <- rpart(approval ~ ., data = train_data, method = "class", control = rpart.control(minsplit = 10, maxdepth = 20))
+# Run variable importance analysis on the model
+variable_importance <- varImp(tree_model)
+
+# Create a data frame for plotting
+importance_df <- data.frame(Variable = rownames(variable_importance), Importance = variable_importance$Overall)
+
+# Sort the data frame by importance score (descending order)
+importance_df <- importance_df[order(-importance_df$Importance), ]
+
+# Create a bar plot
+ggplot(importance_df, aes(x = reorder(Variable, -Importance), y = Importance)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  xlab("Variable") +
+  ylab("Importance Score") +
+  ggtitle("Variable Importance Plot") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+#problem 4(d)
+
+# Load the required libraries
+library(caret)
+library(rpart)
+
+df<- read.csv("Bank_Modified.csv")
+
+# Preprocess  
+df$approval <- as.factor(df$approval)
+df <- df[,!names(df) %in% "id"]
+
+
+# Initial model
+library(rpart)
+fit <- rpart(approval ~ ., data = df, control = rpart.control(minsplit = 10, maxdepth = 20))
+
+
+
+
+# Calculate variable importance
+variable_importance <- fit$variable.importance
+variable_importance
+
+sorted_importance <- sort(variable_importance, decreasing = TRUE)
+sorted_importance
+
+
+tree_model_top1 <- rpart(approval ~ ., data = train_data, method = "class", control = rpart.control(minsplit = 10, maxdepth = 20))
+
+
+# Make predictions on the test data using the new model
+predictions_top1 <- predict(tree_model_top1, test_data, type = "class")
+
+# Evaluate the accuracy of the new model
+original_accuracy_top1 <- confusionMatrix(predictions_top1, test_data$approval)$overall["Accuracy"]
+
+# Print the accuracy of the original and new models
+
+print(paste("Model with Accuracy:", round(original_accuracy_top1, 2)))
+
+# Reduced model
+# Select the top six variables based on importance scores
+top_vars <- names(sorted_importance)[1:6]
+top_vars
+
+
+# Create new datasets with only the top six variables
+train_data_top <- df[, c("approval", top_vars)]
+train_data_top
+
+test_data_top <- df[, c("approval", top_vars)]
+test_data_top
+
+# Build a new decision tree model with the top variables
+tree_model_top <- rpart(approval ~ ., data = train_data_top, method = "class", control = rpart.control(minsplit = 10, maxdepth = 20))
+
+
+# Make predictions on the test data using the new model
+predictions_top <- predict(tree_model_top, test_data_top, type = "class")
+
+# Evaluate the accuracy of the new model
+accuracy_top <- confusionMatrix(predictions_top, test_data_top$approval)$overall["Accuracy"]
+
+# Print the accuracy of the original and new models
+print(paste("Original Model Accuracy:", round(accuracy_top, 2)))
+print(paste("Model with Top 6 Variables Accuracy:", round(accuracy_top, 2)))
+
+
+#problem 4(E)
+ 
+  install.packages("rpart.plot")
+  library(rpart.plot)
+
+# Create a visualization of the original tree
+rpart.plot(tree_model, box.palette = "auto")
+
+# Create a visualization of the tree with reduced variables (Model d)
+rpart.plot(tree_model_top, box.palette = "auto")
+
+
+
+
+```
+
+
+
+
+
