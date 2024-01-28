@@ -1,0 +1,466 @@
+---
+title: "Homework 1"
+author: "SivaRamaKrishna(SRK) Yarra"
+date: "2023-10-01"
+output: html_document
+---
+
+
+install.packages("dplyr",dependencies = TRUE)
+library(dplyr)
+
+adult_data=read.csv("adult.csv",header=T)
+# Load required libraries
+library(dplyr)
+
+#Problem 1(a)
+```{r}
+# Summary statistics for age
+adult_data=read.csv("adult.csv",header=T)
+summary(adult_data)
+summary_age <- summary(adult_data$age)
+summary_age
+summary_hours_per_week <- summary(adult_data$hours.per.week)
+summary_hours_per_week
+
+```
+Explanation:
+This will provide us with summary statistics for each variable, including measures like the mean, median, quartiles (1st quartile, median/2nd quartile, and 3rd quartile), minimum, and maximum values.
+We are able to calculate summary statistics using adult dataset and able to provide data like hours and weekly as per age
+Summary (or descriptive) statistics are the first figures used to represent nearly every dataset. They also form the foundation for much more complicated computations and analyses. Thus, in spite of being composed of simple methods, they are essential to the analysis process
+
+#Problem1(b)
+```{r}
+par(mfrow = c(1, 2))  # Arrange plots side by side
+mean<-mean(adult_data$age,na.rm=TRUE)
+sd<-sd(adult_data$age,na.rm=TRUE)
+
+mean1<-mean(adult_data$hours.per.week,na.rm=TRUE)
+sd1<-sd(adult_data$hours.per.week,na.rm=TRUE)
+
+hist(adult_data$age,main = "Age Distribution", xlab = "Age", ylab = "Frequency", col = "lightblue",freq=FALSE)
+curve(dnorm(x,mean,sd),add=TRUE,col="red",lwd=2)
+hist(adult_data$hours.per.week, main = "Hours per Week Distribution", xlab = "Hours per Week", ylab = "Frequency", col = "lightgreen",freq=FALSE)
+curve(dnorm(x,mean1,sd1),add=TRUE,col="red",lwd=2)
+```
+
+
+Explanation:In histograms, We can visually assess the distribution shape, whether it's symmetric, skewed, or bimodal.
+We are to visualize age distribution from the adult dataset and we are able to check the frequency per hour and weekly 
+The histogram is a popular graphing tool. It is used to summarize discrete or continuous data that are measured on an interval scale. It is often used to illustrate the major features of the distribution of the data in a convenient form
+Histograms: Histograms are useful for visualizing the distribution of a single variable. They are particularly helpful when you want to examine the shape of the distribution, identify patterns, and assess whether it's symmetric, skewed, or bimodal. Histograms provide a detailed view of the data's frequency distribution.
+
+Box Plots (Box-and-Whisker Plots): Box plots are valuable for comparing the distributions of multiple variables or identifying potential outliers within a single variable. They offer a summary view of the data's central tendency, spread (variability), skewness, and presence of outliers. Box plots are effective at highlighting the range, quartiles, and potential extreme values in the data.
+
+For central tendency (mean vs. median): You can compare the mean and median values obtained from the summary statistics to assess whether the distribution is symmetric or skewed. If the mean and median are close, the distribution tends to be symmetric. If they are significantly different, it may indicate skewness.
+
+For spread (quartiles): The quartiles obtained from the summary statistics help you understand the range and spread of the data. You can compare them to the box plot to visually confirm the spread and identify potential outliers.
+
+For skewness: Histograms can help visually identify whether the data is positively skewed (tail on the right) or negatively skewed (tail on the left). Skewness assumptions can be compared to the shape of the histogram.
+By combining the numerical summary statistics with visualizations like histograms and box plots, you can gain a more comprehensive understanding of the data's distribution and shape and validate or refine your assumptions about its characteristics
+
+#Problem1(c)
+```{r}
+# Create a scatterplot matrix of numerical variables
+plot(adult_data$age,adult_data$hours.per.week,xlab="Age",ylab="Hours per week")
+abline(lm(adult_data$age~adult_data$hours.per.week),col="blue")
+
+numeric_vars <- adult_data[,c("age","hours.per.week")]
+pairs(numeric_vars)
+```
+
+
+
+Explanation:Box plots help you identify the central tendency, spread, and presence of outliers in the data. They also provide insights into the distribution shape.
+By comparing the summary statistics and visualizations of the two variables, you can assess their shapes and make observations about their central tendency, spread, skewness, and potential outliers.
+We are able to visualize the way of  Box plots provide a quick visual summary of the variability of values in a dataset. They show the median, upper and lower quartiles, minimum and maximum values, and any outliers in the dataset. Outliers can reveal mistakes or unusual occurrences in data
+The view provided by box plots (box-and-whisker plots) offers several insights and information that can be challenging to discern when looking solely at distributions or histograms. Here are some key advantages of using box plots for data visualization:
+Outliers Identification: Box plots are particularly effective at identifying potential outliers in the data. Outliers are data points that significantly differ from the bulk of the data. In a box plot, outliers are typically shown as individual points beyond the whiskers, making them visually distinct. Detecting outliers is more challenging when examining distributions or histograms alone.
+Central Tendency and Spread: Box plots provide a clear representation of the central tendency (median) and the spread of the data (interquartile range). This information is easily discernible from the position of the box (median) and the length of the box (IQR) without the need to calculate these values separately.
+Skewness: While histograms can indicate skewness in the data, box plots offer a quick visual assessment of skewness based on the box's orientation relative to the median. If the box is symmetrically distributed around the median, it suggests a symmetric distribution. A skewed distribution can be identified when the box is shifted towards one end.
+Comparative Analysis: Box plots are useful for comparing the distributions of multiple variables side by side. When you have multiple box plots in the same visualization, it becomes easier to compare the central tendency, spread, and presence of outliers across different variables or groups.
+Robustness to Extreme Values: Box plots are less sensitive to extreme values (outliers) than histograms. Outliers may not distort the shape of the box plot as much as they can impact the appearance of a histogram. This robustness makes it easier to focus on the central distribution.
+
+Summary Information: Box plots offer a concise summary of key statistics, including quartiles (25th, 50th, and 75th percentiles), median, and potential outliers, all in a single view. This is valuable for quick exploratory data analysis
+
+#Problem1(d)
+```{r}
+library(dplyr)
+
+# Count the occurrences of each category in the categorical variable
+category_counts <- adult_data %>%
+  group_by(workclass) %>%
+  count()
+category_counts1 <- adult_data %>%
+  group_by(education) %>%
+  count()
+category_counts2 <- adult_data %>%
+  group_by(marital.status) %>%
+  count()
+category_counts3 <- adult_data %>%
+  group_by(occupation) %>%
+  count()
+category_counts4 <- adult_data %>%
+  group_by(relationship) %>%
+  count()
+category_counts5 <- adult_data %>%
+  group_by(race) %>%
+  count()
+category_counts6 <- adult_data %>%
+  group_by(sex) %>%
+  count()
+category_counts7 <- adult_data %>%
+  group_by(native.country) %>%
+  count()
+
+category_counts8 <- adult_data %>%
+  group_by(income.bracket) %>%
+  count()# Print the result
+
+print(category_counts)
+print(category_counts1)
+print(category_counts2)
+print(category_counts3)
+print(category_counts4)
+print(category_counts5)
+print(category_counts6)
+print(category_counts7)
+print(category_counts8)
+```
+Explanation:
+
+
+#Problem1(e)
+```{r}
+library(ggplot2)
+library(tidyr)
+
+# Create a cross-tabulation of marital status and income bracket
+cross_tab <- table(adult_data$education, adult_data$income.bracket)
+
+# Create a bar plot to visualize the relationship
+bar_plot <- as.data.frame(cross_tab) %>%
+  ggplot(aes(x = Var1, y = Freq, fill = Var2)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    x = "Education",
+    y = "Frequency",
+    fill = "Income Bracket",
+    title = "Relationship Between Education and Income Bracket"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_brewer(palette = "Set1")
+
+# Print the cross-tabulation and the bar plot
+print(cross_tab)
+print(bar_plot)
+```
+
+
+Explanation:
+To explain the relationship between the values of the two categorical variables, you can observe the patterns in the stacked bar plot:
+Look for patterns in the distribution of categories within each level of the other category. Are certain categories more prevalent when the other category takes on specific values?
+Assess whether there are significant differences in the frequency of combinations. Are there combinations that occur more frequently than others?
+Check for any trends or variations in the relationship. Are there any categories that stand out in terms of their association with specific values of the other category?
+By examining the visualization and considering the patterns and frequencies, you can draw conclusions about the relationship between the two categorical variables and identify any interesting or significant associations between their values
+
+
+
+#Problem 2(a)
+```{r}
+
+# Read population data for even years
+even_years_data <- read.csv("population_even.csv")
+
+# Read population data for odd years
+odd_years_data <- read.csv("population_odd.csv")
+library(dplyr)
+
+
+# Merge the two data frames based on "State"
+merged_data <- merge(even_years_data, odd_years_data, by = "STATE", all = TRUE)
+merged_data
+
+
+
+# Remove duplicate state ID column if it exists
+merged_data <- merged_data %>%
+  dplyr::select(-NAME.y)
+merged_data
+
+
+
+# Remove ".x" suffix from column names
+
+head(merged_data)
+
+```
+Explanation:
+We load the dplyr package if it's not already loaded.
+We use the inner_join() function to merge the two tables based on the "state" variable, which is assumed to be common to both tables.
+then duplicate state ID column has been removed then able to display the merged data
+
+#problem 2(b)
+```{r}
+# Rename columns to just the year number
+new_col_names <- c("STATE","NAME", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019")
+colnames(merged_data) <- new_col_names
+new_col_names
+
+
+# Show the first few rows of the cleaned-up data
+head(merged_data)
+
+```
+
+Explanation:
+After the join, we use the select() function to select only the columns corresponding to years 2010-2019.
+Finally, we use head() to display the first few rows of the resulting merged table, which will contain each state's population data for the specified years
+
+#Problem 2(c)
+```{r}
+replace_missing_with_avg <- function(x) {
+  for (i in 2:(length(x) - 1)) {
+    if (is.na(x[i])) {
+      x[i] <- (x[i - 1] + x[i + 1]) / 2
+    }
+  }
+  return(x)
+}
+
+
+# Apply the custom function to the entire dataset
+merged_data[, 2:ncol(merged_data)] <- lapply(
+  merged_data[, 2:ncol(merged_data)],
+  function(x) replace_missing_with_avg(x)
+)
+merged_data
+
+library(tidyverse)
+
+```
+Explanation:
+Dealing with missing values in a dataset by replacing them with the average of the surrounding years is a common data imputation technique, often used to fill in gaps in time-series data. Here's an explanation of how you can approach this task:
+
+1. Identify Missing Values:
+Start by identifying the missing values in your dataset. These are the cells where data is missing for specific years and states.
+2. Select the Strategy:
+Determine the imputation strategy. In this case, you've chosen to replace missing values with the average of the surrounding years. Another common strategy is linear interpolation, but for simplicity, let's stick with the average method.
+3. Loop Through Missing Values:
+Iterate through the dataset to find missing values. For each missing value, locate the corresponding state and year.
+4. Calculate the Average:
+Calculate the average of the values for the year before and after the missing year. For example, if you have a missing value for Georgia in 2016, calculate the average of Georgia's 2015 and 2017 values.
+5. Replace Missing Value:
+Replace the missing value with the calculated average.
+6. Repeat for All Missing Values:
+Continue this process until you've filled in missing values for all states and years where data was missing
+
+#problem 2(d)(A)
+```{r}
+max_population_by_state <- merged_data %>%
+  rowwise() %>%
+  mutate(Max_Population = max(c_across(starts_with("20")), na.rm = TRUE)) %>%
+  select(STATE, NAME,Max_Population)
+
+max_population_by_state
+
+head(max_population_by_state)
+
+library(dplyr)
+```
+#Explanation:
+We load the dplyr library if it's not already loaded.
+We use the %>% operator to create a pipeline of operations.
+We use the rowwise() function to indicate that we want to perform operations row-wise.
+Inside mutate(), we use the max() function to find the maximum population for each state, considering data for the years 2010-2019. The na.rm = TRUE argument ensures that missing values are ignored when calculating the maximum.
+The result is stored in a new variable called Max_Population.
+Finally, we use head() to display the first few rows of the max_population data frame, showing the maximum population for each state.
+This code will give us a data frame with the maximum population for each state based on the available data for the specified years
+
+#problem 2(d)(b)
+```{r}
+# Calculate the total population across all years for each state (row-wise)
+total_population_by_state <- merged_data %>%
+  rowwise() %>%
+  mutate(Total_Population = sum(c_across(starts_with("20")), na.rm = TRUE)) %>%
+  select(STATE,NAME, Total_Population)
+total_population_by_state
+
+# Show the result
+head(total_population_by_state)
+```
+Explanation:
+The minor change in the code is replacing max() with sum() within the mutate() function. This change instructs R to calculate the sum of the population values across all the specified years for each state. The na.rm = TRUE argument ensures that missing values are ignored when calculating the sum.
+The result is stored in a new variable called Total_Population, and We will obtain a data frame that shows the total population for each state across the years 2010-2019.
+
+#Problem 2(E)
+```{r}
+total_us_population_2018 <- sum(merged_data$`2018`, na.rm = TRUE)
+head(total_us_population_2018)
+
+```
+Explanation:
+target_year is set to the year for which We want to calculate the total US population. We can change this to the desired year.
+The sum() function is used to sum the population values for the specified year (2019 in this example) in the merged_population data frame. The na.rm = TRUE argument ensures that missing values are ignored when calculating the sum.
+The result, which is the total US population for the specified year, is stored in the variable total_us_population.
+Finally, We can print total_us_population to see the total US population for the chosen year.
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(tidyverse)
+
+#Problem 3
+```{r}
+# Reshape the data from wide to long format
+merged_data_long <- pivot_longer(merged_data, cols = starts_with("20"), 
+                                 names_to = "Year", values_to = "Population")
+merged_data_long
+
+merged_data_long$Year <- as.numeric(merged_data_long$Year)
+
+merged_data_long$Year
+
+selected_states <- c("New York", "California", "Texas")  # Replace with your chosen states
+
+plot_data <- merged_data_long %>%
+  filter(NAME %in% selected_states)
+
+ggplot(data = plot_data, aes(x = as.integer(Year), y = Population, color = NAME)) +
+  geom_line() +
+  labs(x = "Year", y = "Population", color = "STATE") +
+  ggtitle("Population Over Time for Selected States")
+
+```
+
+
+#Problem 4 A. Describe two ways in which data can be dirty, and for each one, provide a potential solution??
+
+```
+Certainly! Data can become "dirty" or have a number of problems that reduce its usefulness. Here are two typical problems with data quality and possible remedies in data science:
+
+1.Absence of Data:
+
+Problem: Missing data refers to a dataset that has one or more variables that are either unavailable or insufficient. This may occur for a number of reasons, including incorrect data entry, survey respondent non-response, or technical difficulties during data collecting.
+Solution: Missing data can be addressed in a number of ways:
+Imputation: Substituting estimated values derived from statistical techniques for missing values. Mean, median, and regression imputation are frequently used imputation techniques for numerical data. You can use the mode or strategies like the K-nearest neighbors (KNN) method for categorical data.
+
+To lessen the possibility of missing data, make sure your data gathering procedures are robust. This could involve making improvements to data entry procedures, survey design, and data validation methods.
+
+Analysis Methods: Some machine learning algorithms, such as tree-based algorithms like Random Forests, can handle missing data directly. As an alternative, you might think about including data imputation methods into your modeling procedure.
+
+2.Inconsistent Data:
+
+consistent formats, inconsistent data is produced. This may involve differences in date formats, issues with units, or coding errors.
+Solution: Data cleaning and standardization are necessary to address conflicting data:
+Data cleaning involves finding and fixing problems in data entry such typos, wrong numbers, and outliers. Inconsistencies can be found using tools like data validation tests and data profiling.
+
+Data standardization: Assure that data are documented consistently. This could entail employing standardized measuring units, converting all date formats to a single format, or developing coding guidelines for categorical variables.
+
+Data Transformation: Occasionally, you may need to modify the data to improve its consistency 
+```
+  
+B Explain which data mining functionality you would use to help with each of these data questions.
+
+B(a)Suppose we have data where each row is a customer and we have columns that describe
+their purchases. What are five groups of customers who buy similar things??
+```
+Clustering is a data mining functionality.
+
+Data Preparation: Choose the relevant columns that describe consumer purchases to prepare your data. The columns should represent various facets of each client's purchasing activity, and the rows should be each individual consumer.
+
+Choose whatever characteristics or characteristics of client purchases you want to take into account in the clustering analysis. The data may require preprocessing and transformation, such as scaling or normalization.
+
+Select an algorithm for clustering: Based on the characteristics of your data and the desired result, choose an appropriate clustering procedure. K-Means, Hierarchical Clustering, and DBSCAN are examples of common clustering techniques.
+
+How many clusters are there? Choose the number of clusters—in this case, five—that you want to make. You can employ strategies like the elbow.
+
+Establish the Number of Clusters: Choose the number of clusters (in this case, five) that you wish to establish. The Elbow Method and Silhouette Score are two techniques you can use to figure out how many clusters are ideal.
+
+Apply Clustering: Use your data to run the selected clustering algorithm. Based on how they shop, each consumer will be put into one of the five clusters.
+
+Interpretation: Examine the information to determine the traits of each cluster. Within each group, look for trends and similarities in the purchasing habits of the customers.
+```
+
+B(b)For the same data: can I predict if a customer will buy milk based on what else they bought?
+```
+Yes, you can predict whether a customer will buy milk based on what else they bought using a classification data mining functionality. This is a binary classification problem where you want to classify customers into two categories: "Will Buy Milk" or "Will Not Buy Milk" based on their purchase history. Here's how to approach it:
+
+Data Mining Functionality: Classification
+
+Data Preparation: Prepare your data by selecting the relevant columns that describe customer purchases. Each customer should be represented as a row, and the columns should represent different products or attributes of their purchase behavior.
+
+Feature Selection and Engineering: Choose the features or attributes of customer purchases that you believe are relevant for predicting whether they will buy milk. These features can include the types of products purchased, the frequency of purchases, total spending, etc.
+
+Data Splitting: Split your dataset into a training set and a testing set. The training set will be used to train the classification model, and the testing set will be used to evaluate its performance.
+
+Select a Classification Algorithm: Choose a classification algorithm suitable for your data. Common classification algorithms include Logistic Regression, Decision Trees, Random Forests, Support Vector Machines, and Neural Networks.
+
+Training the Model: Use the training data to train your chosen classification model. The model will learn the relationship between the selected features and the target variable (buying milk).
+
+Model Evaluation: Evaluate the performance of your model using appropriate classification metrics such as accuracy, precision, recall, F1-score, and ROC-AUC on the testing data. This step will help you assess how well your model can predict whether a customer will buy milk.
+
+Prediction: Once your model is trained and evaluated, you can use it to make predictions for new customers. Given a customer's purchase history, the model will predict whether they are likely to buy milk or not.
+
+Interpretation and Insights: Analyze the model's predictions and gain insights into which features are most influential in predicting milk purchases. This can help you understand customer behavior better.
+
+Model Improvement: Depending on the performance of your initial model, you may want to experiment with different algorithms or fine-tune hyperparameters to improve predictive accuracy.
+```
+
+B(c)Suppose we have data listing items in individual purchases. What are different sets of
+products that are often purchased together?
+```
+We can use association rule mining, a data mining feature, to extract various sets of products that are frequently bought together from a dataset listing items in individual purchases. By spotting patterns in the co-occurring goods in transactions, association rule mining enables you to learn which products are typically bought in pairs. Here's how to go about doing it:
+
+Association Rule Mining is a feature of data mining.
+
+Data Preparation: Make sure your data is properly organized, with each row indicating a single transaction of purchases and columns reflecting the items purchased or their identifiers.
+
+Data Encoding: Transform your information into a binary format in which each column represents a different product and the values signify whether the product was present (1) or absent (0) during each transaction. This format is frequently called
+
+Using the Apriori method, you can extract association rules from your data. By creating frequent itemsets—groups of items that regularly appear together—this algorithm creates association rules.
+
+
+Filter Rules: Use your specified minimum support and confidence criteria to sort the discovered association rules. Focusing on the most important associations is made easier by this stage.
+
+Interpretation: Look at the association rules that were generated to find several groups of products that are frequently bought together. These rules are divided into two sections: antecedent (things purchased) and consequent (items likely to be purchased).
+
+Post-processing: Depending on your unique business goals, you can further evaluate and refine the discovered groupings of products. For marketing campaigns or recommendations, you might group products into product bundles, for instance.
+```
+
+C.Explain if each of the following is a data mining task
+
+C(a) Organizing the customers of a company according to education level??
+
+```
+In general, this is not regarded as a data mining task. It is more of an activity that organizes or sorts data. Customer organization by education level is a simple data manipulation task that doesn't require finding undiscovered patterns or generating predictions based on data.
+```
+
+C(b)Computing the total sales of a company??
+```
+Is it a Data Mining Task? No, computing the total sales of a company is a basic data aggregation task and not a data mining task. Data mining usually involves extracting patterns, insights, or predictive models from data, while calculating totals or aggregating values is a straightforward operation.
+```
+C(c)Sorting a student database according to identification numbers??
+```
+Is it a Data Mining Task? No, sorting a database based on identification numbers is a data manipulation task but not a data mining task. Data mining typically deals with more complex tasks like pattern recognition, clustering, classification, or regression.
+```
+C(d)Predicting the outcomes of tossing a (fair) pair of dice??
+```
+forecasting the results of a fair pair of dice is not a data mining task; it is a statistical or probabilistic task. While forecasting dice results is based on well-defined probability theory, data mining often entails extracting patterns and knowledge from big databases.
+```
+C(e)Predicting the future stock price of a company using historical records??
+```
+This is a data mining endeavor, that much is true. Analysis of patterns and trends in previous stock price data is necessary to anticipate future prices when future stock prices are predicted using historical data. Predictive analytics and time series forecasting, which are frequent data mining jobs, fall under this category.
+In conclusion, while some of the aforementioned jobs involve data manipulation or simple math, data mining often entails more intricate procedures, such finding patterns, making predictions, or drawing conclusions from data.
+
+```
+
+
+    
+    
+
+
+
+
+
+
