@@ -1,0 +1,607 @@
+---
+title: "Homework_2_DSC_441"
+author: "SivaRamaKrishna Yarra(SRK)"
+date: "2023-10-08"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+install.packages("dplyr")
+install.packages("tidyr")
+
+#Problem 1
+```{r}
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+
+bank_data <- read.csv("BankData.csv")
+head(bank_data)
+
+#problem (A)
+
+bank_data %>%
+  select_if(is.numeric) %>%
+  gather() %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 20) +
+  facet_wrap(~key, scales = "free_x") +
+  labs(title = "Histograms of Numerical Variables")
+
+
+par(mfrow = c(1, 4))  
+
+barplot(table(bank_data$bool1), main="Bar Plot of bool1", xlab="bool1", ylab="Frequency", col="green")
+
+barplot(table(bank_data$bool2), main="Bar Plot of bool2", xlab="bool2", ylab="Frequency", col="blue")
+
+barplot(table(bank_data$bool3), main="Bar Plot of bool3", xlab="bool3", ylab="Frequency", col="black")
+
+barplot(table(bank_data$approval), main="Bar Plot of approval", xlab="approval", ylab="Frequency", col="red")
+
+
+bank_data$zscore_normalized_var <- scale(bank_data$cont1)
+
+#problem 1(B)
+
+# Apply min-max normalization to another numerical variable
+bank_data$minmax_normalized_var <- (bank_data$cont2 - min(bank_data$cont2)) / (max(bank_data$cont2) - min(bank_data$cont2))
+
+# Apply decimal scaling normalization to a third numerical variable
+bank_data$decimal_normalized_var <- bank_data$cont3 / 10
+
+
+#problem 1(C)
+bank_data %>%
+  select(zscore_normalized_var, minmax_normalized_var, decimal_normalized_var) %>%
+  gather() %>%
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 20) +
+  facet_wrap(~key, scales = "free_x") +
+  labs(title = "Histograms of Normalized Variables")
+
+#problem 1(D)
+
+breaks <- quantile(bank_data$cont1, probs = c(0, 0.33, 0.66, 1), na.rm = TRUE)
+labels <- c("Low", "Medium", "High")
+bank_data$v_bins <- cut(bank_data$cont1, breaks = breaks, labels = labels, include.lowest = TRUE)
+head(bank_data)
+
+#problem 1(E)
+bank_data$v_bins_smoothed <- ave(as.numeric(bank_data$v_bins), bank_data$v_bins, FUN = function(x) mean(x, na.rm = TRUE))
+head(bank_data)
+```
+#problem 2
+
+install.packages("e1071")
+install.packages("caret")
+library(e1071)
+library(caret)
+
+```{r}
+data <- read.csv("BankData.csv")
+data <- na.omit(data)
+
+
+X <- data[, -which(names(data) == "approval")]
+Y <- data$approval
+
+# Ensure the 'approval' column is a factor variable
+data$approval <- as.factor(data$approval)
+
+# Load the e1071 package
+library(e1071)
+
+# Create a function to perform 10-fold cross-validation and calculate accuracy
+svm_cross_validation <- function(C) {
+  svm_model <- svm(approval ~ ., data = data, kernel = "linear", cost = C)
+  predictions <- predict(svm_model, X)
+  accuracy <- sum(predictions == Y) / length(Y)
+  return(accuracy)
+}
+
+# Perform 10-fold cross-validation for different values of C
+C_values <- c(0.01, 0.1, 1, 10, 100)
+accuracies <- sapply(C_values, svm_cross_validation)
+
+# Find the C value that maximizes accuracy
+best_C <- C_values[which.max(accuracies)]
+best_accuracy <- max(accuracies)
+
+# Report the best C value and its corresponding accuracy
+cat("Best C value:", best_C, "\n")
+cat("Accuracy with the best C value:", best_accuracy, "\n")
+
+
+#another method
+
+# Perform grid search
+grid_search_result <- tune(svm, approval ~ ., data = data, kernel = "linear", ranges = list(C = C_values))
+
+# Get the best parameter and accuracy
+best_c <- grid_search_result$best.parameters$C
+best_accuracy <- grid_search_result$best.performance
+
+# Display the best C parameter and accuracy
+best_c
+best_accuracy
+
+```
+
+#problem 3(A)
+```{r}
+# Load necessary libraries (if not already loaded)
+library(dplyr)
+
+# Load the Star Wars dataset
+data(starwars)
+
+# Remove unnecessary variables (films, vehicles, starships, and name)
+starwars_cleaned <- starwars %>%
+  select(-films, -vehicles, -starships, -name)
+
+# Remove rows with missing values
+starwars_cleaned <- na.omit(starwars_cleaned)
+
+# View the cleaned dataset
+head(starwars_cleaned)
+
+
+
+# Load necessary libraries (if not already loaded)
+library(caret)
+
+# Convert categorical variables to dummy variables, excluding "gender"
+dummy_data <- dummyVars(~ ., data = starwars_cleaned[, -which(names(starwars_cleaned) == "gender")])
+
+# Transform the original dataset into a dataset with dummy variables
+starwars_dummies <- as.data.frame(predict(dummy_data, starwars_cleaned))
+
+# Add the "gender" column back to the dataset
+starwars_dummies$gender <- starwars_cleaned$gender
+
+# View the head of the dataset with dummy variables
+head(starwars_dummies)
+
+```
+
+#problem 3(B)
+```{r}
+
+
+# Load necessary libraries (if not already loaded)
+library(e1071)
+data(starwars)
+
+# Load the dataset (assuming you have already prepared the dataset with dummy variables)
+# Replace 'starwars_dummies' with the actual dataset name
+data <- starwars_dummies
+
+# Split the data into a training set and a test set (e.g., 70% training, 30% testing)
+set.seed(123)  # For reproducibility
+#train_indices <- sample(1:nrow(starwars_dummies), 0.7 * nrow(starwars_dummies))
+splitIndex <- createDataPartition(data$gender, p = 0.7, list = FALSE, times = 1)
+train_data <- data[splitIndex, ]
+test_data <- data[-splitIndex, ]
+
+# Define the training control for grid search (train/test split)
+train_control <- trainControl(method = "cv", number = 5)
+
+# Grid search for C parameter on training data
+svm_grid <- expand.grid(C = c(0.01, 0.1, 1, 10))
+svm_model <- train(gender ~ ., 
+                              data = train_data, 
+                              method = "svmLinear",
+                              trControl = train_control, 
+                              preProcess = c("center", "scale"),
+                              tuneGrid = svm_grid)
+
+# Make predictions on the test set
+predictions <- predict(svm_model, newdata = test_data)
+
+
+
+# Calculate accuracy
+accuracy <- sum(predictions == test_data$gender) / nrow(test_data)
+
+# Print the accuracy
+cat("Accuracy:", accuracy, "\n")
+
+```
+
+#Problem 3(C)
+
+```{r}
+# Load necessary libraries (if not already loaded)
+library(caret)
+library(FactoMineR)
+data(starwars)
+
+# Load the dataset (assuming you have prepared the dataset with dummy variables)
+# Replace 'starwars_dummies' with the actual dataset name
+data <- starwars_dummies
+
+# Remove the 'gender' column temporarily for PCA
+data_without_gender <- data[, -which(names(data) == "gender")]
+
+# Perform PCA
+pca_result <- PCA(data_without_gender, scale.unit = TRUE)
+
+# Determine the number of components based on explained variance
+# You can plot the cumulative explained variance to make a decision
+cumulative_variance <- cumsum(pca_result$eig[,"percentage of variance"])
+plot(cumulative_variance, type = "b", xlab = "Number of Components", ylab = "Cumulative Explained Variance")
+
+# Determine the appropriate number of components
+# You can choose a threshold (e.g., 90% explained variance) to decide the number of components
+threshold_variance <- 0.90
+num_pcs <- which(cumulative_variance >= threshold_variance)[1]
+
+# Reduce the data to the selected number of principal components
+reduced_data <- as.data.frame(predict(pca_result, newdata = data_without_gender, ncp = num_pcs))
+
+
+
+# Add the 'gender' column back to the reduced data
+reduced_data$gender <- data$gender
+
+# View the result
+head(reduced_data)
+
+```
+#problem 3(D)
+
+```{r}
+
+# Load necessary libraries (if not already loaded)
+library(e1071)
+library(caret)
+library(FactoMineR)
+
+data(starwars)
+
+# Load the dataset (assuming you have prepared the dataset with PCA components)
+# Replace 'reduced_data' with the actual dataset name
+data <- reduced_data
+
+# Split the data into a training set and a test set (e.g., 70% training, 30% testing)
+set.seed(123)  # For reproducibility
+splitIndex <- createDataPartition(data$gender, p = 0.7, list = FALSE, times = 1)
+train_data <- data[splitIndex, ]
+test_data <- data[-splitIndex, ]
+
+# Ensure that 'gender' is a factor with consistent levels in both train and test data
+train_data$gender <- as.factor(train_data$gender)
+test_data$gender <- as.factor(test_data$gender)
+
+# Define the training control for grid search
+train_control <- trainControl(method = "cv", number = 5)
+
+# Grid search for C parameter on training data
+svm_grid <- expand.grid(C = c(0.01, 0.1, 1, 10))
+svm_model_train_test <- train(gender ~ ., 
+                              data = train_data, 
+                              method = "svmLinear",
+                              trControl = train_control, 
+                              preProcess = c("center", "scale"),
+                              tuneGrid = svm_grid)
+
+# Print the best SVM model for train/test split
+svm_model_train_test
+
+# Make predictions on the test set
+predictions_train_test <- predict(svm_model_train_test, newdata = test_data)
+
+# Create a confusion matrix for train/test split
+confusion_train_test <- confusionMatrix(predictions_train_test, test_data$gender)
+
+# Print the confusion matrix for train/test split
+print(confusion_train_test)
+
+# K-fold cross-validation (e.g., 5-fold)
+train_control_cv <- trainControl(method = "cv", number = 5)
+
+# Grid search for C parameter using k-fold cross-validation
+svm_grid_cv <- expand.grid(C = c(0.01, 0.1, 1, 10))
+svm_model_cv <- train(gender ~ ., 
+                      data = data, 
+                      method = "svmLinear",
+                      trControl = train_control_cv, 
+                      preProcess = c("center", "scale"),
+                      tuneGrid = svm_grid_cv)
+
+# Print the best SVM model for k-fold cross-validation
+svm_model_cv
+
+# Ensure that 'gender' is a factor with consistent levels in the entire dataset
+data$gender <- as.factor(data$gender)
+
+# K-fold cross-validation (e.g., 5-fold)
+train_control_cv <- trainControl(method = "cv", number = 5)
+
+# Grid search for C parameter using k-fold cross-validation
+svm_grid_cv <- expand.grid(C = c(0.01, 0.1, 1, 10))
+svm_model_cv <- train(gender ~ ., 
+                      data = data, 
+                      method = "svmLinear",
+                      trControl = train_control_cv, 
+                      preProcess = c("center", "scale"),
+                      tuneGrid = svm_grid_cv)
+
+# Evaluate the model with k-fold cross-validation
+confusion_cv <- confusionMatrix(predict(svm_model_cv, data), data$gender)
+
+# Print the confusion matrix for k-fold cross-validation
+print(confusion_cv)
+
+
+  
+```
+#Problem 3(E)
+
+Dimensionality Reduction: PCA has reduced the dimensionality of the dataset by transforming the original features into a smaller set of principal components. These principal components are linear combinations of the original features and capture the most significant sources of variation in the data. As a result, the complexity of the model in terms of the number of input features has been reduced.
+
+Simplified Model: With fewer input features to consider, the model becomes simpler and more interpretable. This reduction in complexity can lead to faster model training and improved computational efficiency.
+
+Addressing Multicollinearity: PCA helps address multicollinearity, which occurs when predictor variables are highly correlated. Multicollinearity can make it challenging to interpret the individual effects of each predictor and can lead to unstable model coefficients. By creating uncorrelated principal components, PCA simplifies the relationships between variables, making the model more stable.
+
+Reduced Noise: PCA often filters out noise and less important information in the data. It retains the principal components that explain the most variance while discarding components that contain less meaningful information. This can lead to a more robust model that generalizes better to new data.
+
+Improved Interpretability: While the principal components themselves may not have a direct interpretation, they can be seen as representing patterns or combinations of the original variables. This can enhance the interpretability of the model by focusing on the most important patterns in the data.
+
+Potential Performance Improvement: Although the primary goal of PCA is dimensionality reduction, it may also lead to improved model performance. In some cases, reducing dimensionality can lead to a model that is less prone to overfitting and generalizes better to new, unseen data.
+
+#Probelem 4
+
+```{r}
+
+
+# Load necessary libraries (if not already loaded)
+library(caret)
+# Load the Sacramento housing price dataset
+data(Sacramento)
+
+# View the structure of the dataset
+
+str(Sacramento)
+
+# Summary statistics for numeric variables
+summary(Sacramento)
+
+# Explore the distribution of numeric variables with histograms
+hist(Sacramento$price, main = "Distribution of Price", xlab = "Price")
+
+# Box plot for price by type
+ggplot(Sacramento, aes(x = type, y = price, fill = type)) +
+  geom_boxplot() +
+  labs(title = "Price by Type", x = "Type", y = "Price") +
+  theme_minimal()
+
+# Explore the distribution of categorical variables with bar plots
+barplot(table(Sacramento$type), main = "Distribution of Types")
+
+# Check for class imbalance in the "type" variable
+table(Sacramento$type)
+
+# Calculate the class distribution
+prop.table(table(Sacramento$type))
+```
+
+#problem 4(B)
+
+```{r}
+
+library(caret)
+data(Sacramento)
+
+
+# Assuming you've already loaded and preprocessed the data as mentioned earlier
+# Dealing with extreme variations in numeric variables using normalization
+
+# Identify the numeric variables
+numeric_cols <- sapply(Sacramento, is.numeric)
+
+
+
+# Min-max normalization
+Sacramento[, numeric_cols] <- lapply(Sacramento[, numeric_cols], function(x) (x - min(x)) / (max(x) - min(x)))
+Sacramento
+
+#pca apply
+
+data_for_pca <- Sacramento[, numeric_cols]
+
+# Perform PCA
+pca_result <- prcomp(data_for_pca, scale. = TRUE)
+
+# Determine the proportion of variance explained by each principal component
+pca_result
+
+
+
+# Choose the number of principal components that explain a satisfactory portion of variance
+# For example, retaining components that explain 95% of variance
+n_components <- sum(cumsum(pca_result$sdev^2) / sum(pca_result$sdev^2) <= 0.95)
+
+# Keep only the selected number of principal components
+data_pca <- predict(pca_result, newdata = data_for_pca, ncomp = n_components)
+
+z_scores <- scale(data_pca[, 1:(n_components - 1)]) 
+
+z_scores
+
+# Define a Z-score threshold for outlier detection (e.g., 2 standard deviations)
+outlier_threshold <- 2
+
+# Identify and remove outliers
+data_no_outliers <- data_pca[apply(z_scores, 1, function(row) all(abs(row) <= outlier_threshold)), ]
+
+
+data_pca$type <- Sacramento$type
+
+```
+
+#problem 4(c)
+
+```{r}
+
+# Load necessary libraries (if not already loaded)
+library(caret)
+
+
+# Load the Sacramento housing price dataset
+data(Sacramento)
+library(e1071)
+# Remove the "zip" and "city" variables (if not already removed)
+sacramento_data <- Sacramento[, !names(Sacramento) %in% c("zip", "city")]
+
+# Define the training control for cross-validation
+train_control <- trainControl(method = "cv", number = 5)
+
+svm_grid <- expand.grid(C = c(0.1, 1, 10))
+
+
+
+svm_model <- train(type ~ ., 
+                   data = sacramento_data, 
+                   method = "svmLinear",
+                   trControl = train_control, 
+                   preProcess = c("center", "scale"),
+                   tuneGrid = svm_grid)
+
+# Print the best SVM model
+svm_model
+
+# Make predictions using the best model
+predictions <- predict(svm_model, sacramento_data)
+
+# Calculate the confusion matrix
+confusion <- confusionMatrix(predictions, sacramento_data$type)
+
+# Extract kappa value
+kappa_value <- confusion$kappa
+
+# Print the confusion matrix and kappa value
+print(confusion)
+kappa_value
+cat("Kappa Value:", kappa_value)
+
+
+```
+
+#problem 4(E)
+
+```{r}
+library(caret)
+data(Sacramento)
+
+data_pca$type <- Sacramento$type
+# Identify the minority and majority classes
+table(data_pca$type)
+
+# Define the minority and majority class labels
+minority_class <- "Multi_Family"
+majority_class <- "Residential"
+data_pca$type <- Sacramento$type
+
+balanced_data <- Sacramento[Sacramento$type == minority_class, ]
+
+# Randomly sample from the majority class to balance the dataset
+set.seed(123)  
+# For reproducibility
+majority_samples <- Sacramento[Sacramento$type == majority_class, ]
+sampled_majority <- majority_samples[sample(1:nrow(majority_samples), nrow(balanced_data)), ]
+
+
+# Combine the minority and sampled majority data
+balanced_data <- rbind(balanced_data, sampled_majority)
+
+# Shuffle the rows for randomness
+balanced_data <- balanced_data[sample(nrow(balanced_data)), ]
+
+
+
+
+# Check the distributions of variables in the new balanced dataset
+
+# Load necessary libraries for plotting
+library(ggplot2)
+library(gridExtra)
+
+# Assuming 'balanced_data' contains your balanced dataset
+
+# Create histograms for each numeric variable
+plots <- lapply(names(balanced_data)[1:(n_components - 1)], function(var_name) {
+  p <- ggplot(data = balanced_data, aes_string(x = var_name)) +
+    geom_histogram(binwidth = 0.05, fill = "blue", color = "black", stat = "count") +
+    labs(title = var_name)
+  return(p)
+})
+
+# Arrange the plots in a grid
+grid.arrange(grobs = plots, ncol = 2)
+
+
+# Summary statistics for each numeric variable
+summary_stats <- sapply(balanced_data[, 1:(n_components - 1)], summary)
+print(summary_stats)
+
+# Load the required libraries for SVM and grid search
+library(e1071)
+library(caret)
+
+# Set up a cross-validation control
+ctrl <- trainControl(method = "cv", number = 5)
+
+# Create a grid of hyperparameters for grid search
+
+
+
+svm_grid <- expand.grid(C = c(0.1, 1, 10))
+
+
+
+svm_grid
+
+
+```
+
+#Problem 5
+
+```{r}
+
+# Load necessary libraries (if not already loaded)
+library(caret)
+
+# Make a copy of the mtcars dataset
+mycars <- mtcars
+
+# Initialize a new variable to hold fold indices
+mycars$folds <- 0
+
+# Create 5 folds and get a list of lists of indices
+flds <- createFolds(1:nrow(mycars), k = 5, list = TRUE)
+
+# This loop sets all the rows in a given fold to have that fold's index in the 'folds' variable
+for (i in 1:5) {
+  mycars$folds[flds[[i]]] <- i
+}
+
+# Create a visualization of the distribution of the 'gear' variable across folds
+library(ggplot2)
+
+# Convert 'folds' variable to a factor for visualization
+mycars$folds <- as.factor(mycars$folds)
+
+# Create a bar plot to visualize the distribution of 'gear' across folds
+ggplot(data = mycars, aes(x = factor(gear), fill = folds)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Distribution of 'gear' Variable Across Folds",
+       x = "Number of Gears",
+       y = "Count") +
+  scale_fill_manual(values = c("red", "blue", "green", "purple", "orange")) +
+  theme_minimal()
+
+
+```
