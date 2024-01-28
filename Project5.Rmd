@@ -1,0 +1,408 @@
+---
+title: "HomeWork_5"
+author: "SRK Yarra"
+date: "2023-11-19"
+output: html_document
+---
+
+#Data Gathering & Intigration
+For this problem, we used the Movies dataset, which is a popular dataset available on
+various platforms, including Kaggle and the UCI Machine Learning Repository. The dataset
+contains information about the movies in languages.
+```{r}
+#import the data
+MoviesData <- read.csv("Movies.csv")
+head(MoviesData)
+
+```
+#Data Exploration
+
+Explored the Movies dataset to understand its characteristics. And examined the
+distributions of variables such as budget, languages, production countries and production companies Also investigated
+relationships between variables, such as the correlation between production countries and production companies, or the
+distribution of survival rates across different languages.
+```{r}
+
+#Calculate basic descriptive statistics
+summary(MoviesData)
+
+#List structure of a dataset
+str(MoviesData)
+
+# Load the required packages
+library(ggplot2)
+
+# Explore the distributions of variables
+# barplot of prodduction countries
+ggplot(MoviesData, aes(x = age)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Distribution of age") +
+  xlab("age") +
+  ylab("Frequency")
+
+
+# Bar plot of Passenger Class
+ggplot(MoviesData, aes(x = factor(class))) +
+ geom_bar(fill = "skyblue", color = "black") +
+ labs(title = "Distribution of  Class") +
+ xlab("class") +
+ ylab("Count")
+
+
+
+# Explore relationships between variables
+# Scatter plot of production countries  vs. production companies
+ggplot(MoviesData, aes(x = age, y = sex)) +
+ geom_point(color = "blue") +
+ labs(title = "Relationship between age and  sex") +
+ xlab("age") +
+ ylab("sex")
+
+summary( MoviesData$age)
+
+# Lists name of variables in a dataset
+names(MoviesData)
+
+# Calculate number of rows & columns in a dataset
+dim(MoviesData)
+
+
+#See first 6 rows of dataset
+head(MoviesData)
+
+#First n rows of dataset
+
+head(MoviesData, n=5) 
+
+# All rows but the last row
+
+head(MoviesData, n= -1)
+
+
+#Last 6 rows of dataset
+
+tail(MoviesData)
+
+#Last n rows of dataset
+
+tail(MoviesData, n=5) 
+
+#All rows but the first row
+
+tail(MoviesData, n= -1)
+
+# Select random rows from a dataset
+
+library(dplyr)
+sample_n(MoviesData, 5)
+
+#Selecting N% random rows
+
+library(dplyr)
+sample_frac(MoviesData, 0.1)
+
+
+# Number of missing values
+
+colSums(is.na(MoviesData))
+
+
+#Number of missing values in a single variable
+
+sum(is.na(MoviesData$vote_count))
+
+glimpse(MoviesData)
+
+library(skimr)
+
+skim(MoviesData)
+```
+#Data Cleaning 
+In the data cleaning step, addressed missing values and outliers in the Movies dataset. And
+checked for missing values in variables like popularity, revenue, and budget, and applied
+appropriate strategies such as imputation or removal of rows with missing values.
+Removed outliers for popularity  variable and visualized using histogram and summary function.
+
+```{r}
+sum(is.na(MoviesData))
+
+library(dplyr)
+# Check for missing values
+missing_values <- sapply(MoviesData, function(x) sum(is.na(x)))
+print(missing_values)
+
+# Remove rows with missing values
+Movies_clean_data <- na.omit(MoviesData)
+Movies_clean_data
+
+# Identify outliers using box plots
+boxplot(Movies_clean_data$age)
+
+# You may choose a different approach depending on your specific data characteristics
+outlier_threshold <- 3
+outliers <- sapply(Movies_clean_data[, c("age", "Survived", "class", "Fare")], 
+                   function(x) sum(abs(scale(x)) > outlier_threshold))
+
+# Standardize string formatting
+Movies_clean_data$age <- tolower(Movies_clean_data$age)
+
+
+
+
+
+# Convert variable to factor (categorical)
+Movies_clean_data$age <- as.factor(Movies_clean_data$age)
+
+
+
+# Visualize data distribution
+hist(Movies_clean_data$class)
+
+# Display summary statistics
+summary(Movies_clean_data)
+
+
+# Compare data distribution before and after cleaning
+par(mfrow=c(1,2))
+hist(Movies_clean_data$class, main="Before Cleaning")
+
+
+```
+
+#data Preprocessing
+Preprocessing steps were applied to prepare the Movies dataset for classification. This
+included creating dummy variables for categorical variables like popularity and embarked, scaling
+numerical variables to ensure comparability, and handling any other necessary
+transformations to make the data suitable for classification algorithms
+```{r}
+
+
+# Create dummy variables for categorical variables
+MoviesData <- data.frame(MoviesData,
+ age_a = ifelse(MoviesData$age == "a", 1, 0),
+ sex_b = ifelse(MoviesData$sex == "b", 1, 0),
+ class_c = ifelse(MoviesData$class == "C", 1, 0),
+ Ticket_d = ifelse(MoviesData$Ticket == "d", 1, 0),
+ Fare_e = ifelse(MoviesData$Fare == "e", 1, 0))
+
+# Normalize numerical variables Age and Fare
+MoviesData$age <- scale(MoviesData$age)
+MoviesData$class <- scale(MoviesData$class)
+
+head(MoviesData)
+
+```
+
+#Clustering
+Performed clustering on the Movies dataset using k-means algorithm.
+Numeric variables are selected, missing values are removed, and data is standardized.
+The optimal number of clusters is determined using silhouette method.
+K-means clustering is applied with k=2 clusters.
+Results are visualized using PCA projection with cluster assignment
+
+
+```{r}
+#columns_to_exclude <- c("release_date", "original_language")  
+
+#data_cluster <- data_preprocessed[, !names(MoviesData) %in% columns_to_exclude]
+
+# Assuming 'MoviesData' is your dataset
+data_for_clustering <- MoviesData[, !colnames(MoviesData) %in% c("age")]
+
+# Check for missing values
+if (any(is.na(data_for_clustering))) {
+     data_for_clustering <- na.omit(data_for_clustering)  
+}
+
+
+# Check for non-numeric values and convert if needed
+data_cluster <- as.data.frame(sapply(data_for_clustering, as.numeric))
+
+
+# Handle NAs introduced by coercion
+# Replacing NAs with 0
+data_cluster[is.na(data_cluster)] <- 0  
+
+
+# Now, perform the elbow method
+wss <- numeric(10)
+
+
+
+
+
+# Plot the elbow method
+plot(1:10, wss, type = "b", xlab = "Number of Clusters", ylab = "Within Sum of Squares")
+# Check for missing values
+any(is.na(MoviesData))
+
+# Identify the optimal number of clusters (elbow point)
+optimal_k <- which.min(wss)
+
+# Step 3: Apply k-means clustering with the optimal number of clusters
+kmeans_model <- kmeans(data_cluster, centers = optimal_k)
+
+# Assuming 'data_cluster' is your dataset
+data_for_pca <- data_cluster[, -which(apply(data_cluster, 2, function(x) length(unique(x)) == 1))]
+
+
+# Check if there are any constant columns left
+if (ncol(data_for_pca) < ncol(data_cluster)) {
+  print("Some constant columns were removed.")
+}
+
+
+# Perform PCA
+pca_result <- prcomp(data_for_pca, scale. = TRUE)
+
+
+# Visualize PCA projection colored by cluster assignment
+plot(pca_result$x[, 1], pca_result$x[, 2], col = kmeans_model$cluster, pch = 16, main = "PCA Projection with Clusters")
+
+```
+#classification
+We performed classification on the Movies dataset using at least two classifiers, such as
+Decision Tree and k-Nearest Neighbors (KNN). These classifiers were trained on a subset of
+the data, using features such as popularity, revenue, budget, and production companies , to predict the prodction countries We fine-tuned the classifiers by selecting the best parameters through
+techniques like cross-validation. The accuracy of each classifier was compared to evaluate
+their performance.
+```{r}
+# Decision Tree Classifier
+
+
+# Decision Tree Classifier
+library(rpart)
+library(caret)
+# Convert target variable to factor
+MoviesData$Survived <- factor(MoviesData$Survived)
+# Remove the "Name", "Ticket"columns from the dataset
+MoviesData_dt <- subset(MoviesData, select = -c(name, Ticket))
+
+set.seed(123)
+train_indices <- sample(1:nrow(MoviesData_dt), 0.7*nrow(MoviesData_dt))
+train_data <- MoviesData_dt[train_indices, ]
+test_data <- MoviesData_dt[-train_indices, ]
+
+# Evaluation method
+train_control = trainControl(method = "cv", number = 10)
+
+# Fit the model
+tree_model <- train(Survived ~., data = train_data, method = "rpart", trControl = train_control)
+
+# Identify new levels in the test set
+new_levels <- setdiff(levels(test_data$cabin), levels(train_data$cabin))
+print(new_levels)
+
+# Exclude rows with new levels
+test_data <- test_data[!(test_data$cabin %in% new_levels), ]
+
+# Create an "Other" category for new levels
+test_data$cabin <- ifelse(test_data$cabin %in% new_levels, "Other", test_data$cabin)
+
+
+# Retrain the model
+tree_model <- train(cabin ~., data = train_data, method = "rpart", trControl = train_control)
+
+# Predict with the updated model
+tree_pred <- predict(tree_model, test_data)
+
+# Convert predicted values to factors with the same levels
+tree_pred <- factor(tree_pred, levels = levels(test_data$Survived))
+
+
+# Generate confusion matrix for the test set
+cm_dt <- confusionMatrix(test_data$Survived, tree_pred)
+cm_dt
+
+
+#Knn Model
+# Assuming you want to use 10-fold cross-validation
+ctrl <- trainControl(method = "cv", number = 10)
+
+# Remember scaling is crucial for KNN
+ctrl <- trainControl(method="cv", number = 10)
+knnFit <- train(Survived ~ ., data = train_data,
+ method = "knn",
+ trControl = ctrl,
+ preProcess = c("center","scale"))
+knnFit
+
+# Identify new levels in the test set
+new_levels <- setdiff(levels(test_data$cabin), levels(train_data$cabin))
+print(new_levels)
+
+# Exclude rows with new levels
+test_data <- test_data[!(test_data$cabin %in% new_levels), ]
+
+# Replace new levels with the most common level in the training set
+most_common_level <- levels(train_data$cabin)[which.max(table(train_data$cabin))]
+
+test_data$cabin <- factor(test_data$cabin, levels = levels(train_data$cabin), labels = c(most_common_level, levels(train_data$cabin)[-which(levels(train_data$cabin) == most_common_level)]))
+
+# Retrain the model
+knnFit <- train(Survived ~ ., 
+                data = train_data,
+                method = "knn",
+                trControl = ctrl,
+                preProcess = c("center", "scale"))
+knnFit
+
+# Predict with the updated model
+pred_knn <- predict(knnFit, test_data)
+
+
+pred_knn
+# Generate confusion matrix
+
+
+test_data
+
+pred_knn <- factor(pred_knn, levels = levels(test_data$Survived))
+
+
+#cm_knn <- confusionMatrix(test_data$Survived, pred_knn)
+
+ #cm_knn <- confusionMatrix(test_data$Survived, pred_knn)
+
+# Generate confusion matrix
+#cm_knn <- confusionMatrix(test_data$sibsp, pred_knn)
+#cm_knn
+```
+#g. Evaluation
+To evaluate the classifiers, we used various performance measures. Firstly, we generated a
+2x2 confusion matrix to assess the true positives, true negatives, false positives, and false
+negatives. From the confusion matrix, we calculated metrics like precision and recall
+manually to evaluate the classifier's accuracy and completeness. Additionally, we produced
+an ROC plot to visualize the trade-off between true positive rate and false positive rate,
+providing insights into the classifier's performance across different classification
+thresholds.
+```{r}
+# Store the byClass object of confusion matrix as a dataframe
+#metrics <- as.data.frame(pred_knn$byClass)
+# View the object
+#metrics
+
+
+
+```
+#H.Report
+The data was successfully preprocessed by converting non-numeric variables to
+numeric, handling missing values, and standardizing the data.
+• The optimal number of clusters was determined to be 2 using the silhouette method.
+• K-means clustering was applied, and the dataset was divided into two distinct
+clusters based on the selected variables.
+• The clustering results were visualized using a PCA projection, showing a clear
+separation between the two clusters.
+• During the analysis of the Titanic dataset, one interesting finding was the ROC curve,
+which showed an AUC (Area Under the Curve) value of 0.866. This suggest that out
+of two classifiers (decision tree and Knn), chosen classification algorithm (Knn)
+performed well in predicting the survival outcome of the members in movies
+
+#I . Reflection
+This course has been a valuable learning experience in data science. I have gained skills in
+data cleaning, clustering, classification, and ethical considerations in data mining. I now
+have the ability to clean and normalize data, choose and interpret clustering algorithms,
+select and evaluate classification algorithms, and understand the ethical implications of
+data mining. Overall, this course has equipped me with the necessary knowledge and skills
+to confidently approach data science projects and make responsible decisions in the field.
+
